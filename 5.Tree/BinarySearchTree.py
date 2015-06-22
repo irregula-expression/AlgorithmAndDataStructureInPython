@@ -41,6 +41,60 @@ class TreeNode:
 			self._leftChild.parent = self
 		if self.hasRightChild():
 			self._rightChild.parent = self
+	
+	def findSuccessor(self):
+		succ = None
+		if self.hasRightChild():
+			succ = self.rightChild.findMin()
+		else:
+			if self._parent != None:
+				if self.isLeftChild():
+					succ = self._parent
+				else:
+					self._parent._rightChild = None
+					succ = self._parent.findSuccessor()
+					self._parent._rightChild = self
+		return succ
+		
+	def finMin(self):
+		currentNode = self
+		while currentNode.hasLeftChild():
+			currentNode = currentNode._leftChild
+		return currentNode
+		
+	def splicOut(self):
+		if self.isLeaf():
+			if self.isLeftChild():
+				self._parent._leftChild = None
+			else:
+				self._parent._rightChild = None
+				
+		elif self.hasAnyChildren():
+			if self.hasLeftChild():
+				if self.isLeftChild():
+					self._parent._leftChild = self._leftChild
+				else:
+					self._parent._rightChild = self._leftChild
+				self._leftChild.parent = self._parent
+			else:
+				if self.isLeftChild():
+					self._parent._leftChild = self._rightChild
+				else:
+					self._parent._rightChild =self._rightChild
+				self._rightChild._parent = self._parent
+	
+	def __iter__(self):
+		if self != None:
+			if self.hasLeftChild():
+				for elem in self._leftChild:
+					yield elem
+			
+			yield self._key
+			
+			if self.hasRightChild():
+				for elem in self._rightChild:
+					yield elem
+						
 			
 
 			
@@ -109,14 +163,54 @@ class BinarySearchTree:
 		else:
 			return False
 			
-	
+	def delete(self, key):
+		if self._size == 1 and self._root._key == key:
+			self._root = None
+			self._size -= 1
 		
-		
-		
-		
-		
-		
-		
-		
-		
-		
+		elif self._size > 1:
+			nodeToRemove = self._get(key, self._root)
+			if nodeToRemove != None:
+				self.remove(nodeToRemove)
+			else:
+				raise KeyError("error, key not in tree")
+				
+		else:
+			raise KeyError("error, key not in tree")
+			
+	def remove(self, currentNode):
+		if currentNode.isLeaf():
+			if currentNode.isLeftChild():
+				currentNode._parent._leftChild = None
+			else:
+				currentNode._parent._rightChild = None
+				
+		elif currentNode.hasBothChildren():
+			succ = currentNode.findSuccessor()
+			succ.spliceOut()
+			currentNode._key = succ._key
+			currentNode._val = succ._val
+			
+		else:
+			if currentNode.hasLeftChild():
+				if currentNode.isLeftChild():
+					currentNode._parent._leftChild = currentNode._leftChild
+					currentNode._leftChild._parent = currentNode._parent
+				elif currentNode.isRightChild():
+					currentNode._parent._rightChild = currentNode._leftChild
+					currentNode._leftChild._parent = currentNode._parent
+				else:
+					currentNode.setNodeData(self._leftChild._key, self._leftChild._val,
+											self._leftChild._leftChild, self._leftChild._rightChild)
+				
+			else: #has right child
+				if currentNode.isLeftChild():
+					currentNode._parent._leftChild = currentNode._rightChild
+					currentNode._rightChild._parent = currentNode._parent
+				elif currentNode.isRightChild():
+					currentNode._parent._rightChild = currentNode._rightChild
+					currentNode._rightChild._parent = currentNode._parent
+				else:
+					currentNode.setNodeData(self._rightChild._key, self._rightChild._val,
+											self._rightChild._leftChild, self._rightChild._rightChild)
+
